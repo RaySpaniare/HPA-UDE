@@ -7,6 +7,8 @@ The model combines:
 - A dynamic backbone (`FiLM + Mamba`) for temporal representation learning.
 - An ODE-based water balance core for physically consistent prediction.
 - Optional symbolic regression for interpretability.
+- 
+  The data you need to use is located at https: / /zenodo.org/records/19343205
 
 ## Project Structure
 
