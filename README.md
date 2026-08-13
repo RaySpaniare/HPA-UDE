@@ -8,7 +8,7 @@ The model combines:
 - An ODE-based water balance core for physically consistent prediction.
 - Optional symbolic regression for interpretability.
 - 
-  The data you need to use is located at https: / /zenodo.org/records/19343205
+  The datasets required to reproduce this study, including the Clustering_Results.csv cluster-label file, are openly available from the latest Zenodo deposit: https://zenodo.org/records/21918634
 
 ## Project Structure
 
@@ -24,6 +24,10 @@ The model combines:
 - `drought_indices_optimized.py`: Optimized drought index preprocessing (DOY, SPEI, SMDI).
 - `symbolic_regression.py`: Native KAN symbolic regression and interpretability tools.
 - `utils.py`: Shared utility helpers and hydrological metrics.
+-  `buffered_spatial_holdout.py`: Five-fold spatial-block holdout training and evaluation.
+- `plot_spatial_holdout_boxplots.py`: Generates the spatial-block holdout performance plots reported in Figure S10.
+- `requirements.txt`: Pinned Python dependencies for reproducing the spatial-block holdout experiment.
+- `environment.yml`: Conda environment specification for reproducibility.
 
 ## Data Expectations
 
@@ -38,7 +42,8 @@ Required columns include:
 - Static: `Clay`, `Sand`, `BD`, `OC`, `Porosity`, `Dem`, `Slope`, `Lon`, `Lat`
 - Dynamic: `Pre`, `PET`, `LST`, `LAI`
 - Keys/target: `Grid_ID`, `Date`, `SM`
-
+The required `Clustering_Results.csv` file is included in the latest Zenodo deposit:
+https://zenodo.org/records/21918634.
 Cluster labels are loaded from `Clustering_Results.csv`.
 You can override the cluster file path via environment variable:
 
@@ -46,13 +51,17 @@ You can override the cluster file path via environment variable:
 
 ## Installation
 
-Create and activate a Python environment, then install dependencies (example):
+
+Two environment specifications are provided.
+
+## Option 1: Conda
 
 ```bash
-pip install torch torchvision torchaudio
-pip install numpy pandas pyarrow scikit-learn matplotlib tqdm scipy
-pip install torchdiffeq mamba-ssm numba pandarallel sympy
-```
+conda env create -f environment.yml
+conda activate spatial-holdout-hpa-ude
+
+## Option 2: pip
+pip install -r requirements.txt
 
 Notes:
 
