@@ -1,0 +1,13 @@
+# Spatial-block holdout experiment and Figure S10
+# Python version used for the reported experiment: 3.11.15
+# CUDA-enabled PyTorch wheels
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+numpy==2.4.4
+pandas==3.0.3
+scipy==1.17.1
+scikit-learn==1.8.0
+torch==2.11.0+cu128
+matplotlib==3.10.9
+tqdm==4.67.3
+pyarrow==24.0.0
