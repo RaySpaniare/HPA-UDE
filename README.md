@@ -8,7 +8,15 @@ The model combines:
 - An ODE-based water balance core for physically consistent prediction.
 - Optional symbolic regression for interpretability.
 - 
-  The datasets required to reproduce this study, including the Clustering_Results.csv cluster-label file, are openly available from the latest Zenodo deposit: https://zenodo.org/records/21918634
+  ## Data Availability
+
+The five annual pre-processed spatiotemporal datasets used for model training and evaluation (2015–2019) are openly available on Zenodo:
+https://zenodo.org/records/19343205
+
+The required cluster-label file (`Clustering_Results.csv`) is openly available in a separate Zenodo record:
+https://zenodo.org/records/21918634
+
+The source code and scripts required to reproduce the HPA-UDE experiments are available in this GitHub repository.
 
 ## Project Structure
 
