@@ -11,3 +11,8 @@ torch==2.11.0+cu128
 matplotlib==3.10.9
 tqdm==4.67.3
 pyarrow==24.0.0
+torchdiffeq==0.2.5
+mamba-ssm==2.3.2.post1
+numba==0.65.1
+pandarallel==1.6.5
+sympy==1.14.0

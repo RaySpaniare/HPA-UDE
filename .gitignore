@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+
+# Generated standard-workflow artifacts
+checkpoints/
+results/
+
+# Generated spatial-holdout artifacts
+fold_*/
+figures/
+batch_benchmark.csv
+batch_benchmark.json
+spatial_block_assignments.csv
+spatial_block_holdout_metrics_all_folds.csv
+spatial_block_holdout_metrics_summary_by_split.csv
