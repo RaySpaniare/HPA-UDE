@@ -1,137 +1,195 @@
 # HPA-UDE (Hydrology Physics-Aware Universal Differential Equation)
 
-This folder contains a physics-aware deep learning workflow for soil moisture modeling.
-The model combines:
+This repository contains the source code used for soil-moisture modeling with the
+Hybrid Physics-AI Universal Differential Equation (HPA-UDE) framework. The model
+combines a static hypernetwork, a FiLM-conditioned Mamba temporal encoder, an
+ODE water-balance core, and optional symbolic regression.
 
-- A static hyper-network (`GeoHyperNet`) to generate physically constrained parameters.
-- A dynamic backbone (`FiLM + Mamba`) for temporal representation learning.
-- An ODE-based water balance core for physically consistent prediction.
-- Optional symbolic regression for interpretability.
-- 
-  ## Data Availability
+## Data availability
 
-The five annual pre-processed spatiotemporal datasets used for model training and evaluation (2015–2019) are openly available on Zenodo:
-https://zenodo.org/records/19343205
+The five annual pre-processed spatiotemporal datasets used for model training and
+evaluation (2015-2019) are openly available on Zenodo:
 
-The required cluster-label file (`Clustering_Results.csv`) is openly available in a separate Zenodo record:
-https://zenodo.org/records/21918634
+- https://doi.org/10.5281/zenodo.19343205
 
-The source code and scripts required to reproduce the HPA-UDE experiments are available in this GitHub repository.
+The required cluster-label file (`Clustering_Results.csv`) is openly available
+in a separate Zenodo record:
 
-## Project Structure
+- https://doi.org/10.5281/zenodo.21918634
 
-- `train.py`: Main training entrypoint (direct finetuning with physics priors).
-- `evaluate.py`: Evaluation pipeline for Train/Val/Test splits and report export.
-- `dataset.py`: Data loading, caching, normalization, and stratified hold-out split.
-- `dataset_config.py`: Dataset field definitions and constants.
-- `model.py`: Main model definitions (`GeoHyperNet`, `_ODEFunc`, `HPA_UDE_Model`).
-- `model_components.py`: Core neural/physics components.
-- `losses.py`: Physical and robust objective functions.
-- `trainers.py`: Epoch-level training/validation loops.
-- `preload.py`: Optional GPU preloading dataloader for Windows acceleration.
-- `drought_indices_optimized.py`: Optimized drought index preprocessing (DOY, SPEI, SMDI).
-- `symbolic_regression.py`: Native KAN symbolic regression and interpretability tools.
-- `utils.py`: Shared utility helpers and hydrological metrics.
--  `buffered_spatial_holdout.py`: Five-fold spatial-block holdout training and evaluation.
-- `plot_spatial_holdout_boxplots.py`: Generates the spatial-block holdout performance plots reported in Figure S10.
-- `requirements.txt`: Pinned Python dependencies for reproducing the spatial-block holdout experiment.
-- `environment.yml`: Conda environment specification for reproducibility.
+Both records and their files can be accessed without logging in.
 
-## Data Expectations
+## Repository structure
 
-The training/evaluation dataset is expected as annual parquet files:
+- `train.py`: main training entry point.
+- `evaluate.py`: Train/Validation/Test evaluation and report export.
+- `buffered_spatial_holdout.py`: five-fold spatial-block holdout experiment.
+- `plot_spatial_holdout_boxplots.py`: Figure S10 spatial-holdout plots.
+- `dataset.py`: data loading, caching, normalization, and stratified splitting.
+- `dataset_config.py`: dataset fields and constants.
+- `model.py`: `GeoHyperNet`, `_ODEFunc`, and `HPA_UDE_Model`.
+- `model_components.py`: neural-network and physics components.
+- `losses.py`: physical and robust objective functions.
+- `trainers.py`: epoch-level training and validation.
+- `drought_indices_optimized.py`: drought-index preprocessing.
+- `symbolic_regression.py`: KAN symbolic regression and formula extraction.
+- `requirements.txt` and `environment.yml`: pinned environments.
 
-- `Soil_Moisture_Data_2015.parquet`
-- `Soil_Moisture_Data_2016.parquet`
-- `...`
+## Data layout
 
-Required columns include:
+Place the following files in one directory:
 
-- Static: `Clay`, `Sand`, `BD`, `OC`, `Porosity`, `Dem`, `Slope`, `Lon`, `Lat`
-- Dynamic: `Pre`, `PET`, `LST`, `LAI`
-- Keys/target: `Grid_ID`, `Date`, `SM`
-The required `Clustering_Results.csv` file is included in the latest Zenodo deposit:
-https://zenodo.org/records/21918634.
-Cluster labels are loaded from `Clustering_Results.csv`.
-You can override the cluster file path via environment variable:
+```text
+/path/to/data/
+  Soil_Moisture_Data_2015.parquet
+  Soil_Moisture_Data_2016.parquet
+  Soil_Moisture_Data_2017.parquet
+  Soil_Moisture_Data_2018.parquet
+  Soil_Moisture_Data_2019.parquet
+  Clustering_Results.csv
+```
 
-- `HPA_UDE_CLUSTER_CSV`
+Required columns are:
+
+- Static: `Clay`, `Sand`, `BD`, `OC`, `Porosity`, `Dem`, `Slope`,
+  `Lon`, and `Lat`.
+- Dynamic: `Pre`, `PET`, `LST`, and `LAI`.
+- Keys and target: `Grid_ID`, `Date`, and `SM`.
+
+If the cluster CSV is stored elsewhere, set `HPA_UDE_CLUSTER_CSV` to its
+absolute path.
 
 ## Installation
 
+Python 3.11.15 and a CUDA-enabled PyTorch build were used for the deposited
+environment. Linux or WSL2 with an NVIDIA CUDA toolchain is recommended because
+`mamba-ssm` may require platform-specific compiled extensions.
 
-Two environment specifications are provided.
-
-## Option 1: Conda
+### Option 1: Conda
 
 ```bash
 conda env create -f environment.yml
 conda activate spatial-holdout-hpa-ude
-
-## Option 2: pip
-pip install -r requirements.txt
-
-Notes:
-
-- `torchdiffeq`, `mamba-ssm`, `numba`, and `pandarallel` are optional but recommended.
-- The code has built-in fallbacks when some optional packages are unavailable.
-
-## Quick Start
-
-### 1. Train
-
-```bash
-python train.py --data_dir /path/to/parquet_folder --device cuda
 ```
 
-Useful options:
+### Option 2: pip
 
-- `--use_preload`: preload dataset to GPU memory (if VRAM is sufficient).
-- `--use_compile`: enable modular `torch.compile` acceleration.
-- `--lambda_mass`, `--lambda_flux`, `--lambda_mono`: physics-loss weights.
-- `--physics_warmup`: pure MSE warmup epochs before enabling physics losses.
+Create and activate a clean Python 3.11 environment, then run:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Confirm that the paper-configuration dependencies are available:
+
+```bash
+python -c "import torch, mamba_ssm, torchdiffeq, numba, pandarallel, sympy; print('dependency check: OK')"
+```
+
+The code contains limited fallbacks for diagnostic use, but the reported
+configuration requires `mamba-ssm` and `torchdiffeq`. Do not use the fallback
+Mamba encoder or fallback ODE integration when reproducing the reported results.
+
+## Standard train/evaluate workflow
+
+Run all commands from the repository root.
+
+### 1. Train and create the checkpoint
+
+```bash
+python train.py --data_dir /path/to/data --device cuda
+```
+
+Training creates the checkpoint expected by `evaluate.py` at:
+
+```text
+checkpoints/best_model.pth
+```
+
+The checkpoint is a generated training artifact and is not stored in Git. To
+obtain it, run the training command above. To evaluate a checkpoint stored at a
+different location, pass its path explicitly with `--checkpoint`.
 
 ### 2. Evaluate
 
 ```bash
-python evaluate.py --data_dir /path/to/parquet_folder --checkpoint checkpoints/best_model.pth
+python evaluate.py \
+  --data_dir /path/to/data \
+  --checkpoint checkpoints/best_model.pth \
+  --device cuda
 ```
 
-Outputs are saved to `results/`:
+Evaluation outputs are written to `results/`, including
+`metrics_summary.csv`, `metrics_summary.parquet`, and, unless disabled,
+`timeseries_predictions.parquet`.
 
-- `metrics_summary.parquet`
-- `metrics_summary.csv`
-- `timeseries_predictions.parquet` (unless `--skip_timeseries`)
-- `evaluation_report.txt`
+## Five-fold spatial-block holdout
 
-### 3. Drought Index Preprocessing (Optional)
+The spatial experiment orders grid cells along the dominant spatial extent and
+divides them into five contiguous blocks. In each fold, one block is held out
+for testing, the adjacent block is used for validation, and the other three
+blocks are used for training. Static and dynamic scalers are fitted only on the
+training cells in each fold.
+
+Inspect and cache the spatial partition without training:
 
 ```bash
-python drought_indices_optimized.py --data_dir /path/to/parquet_folder
+python buffered_spatial_holdout.py \
+  --data_dir /path/to/data \
+  --output_root . \
+  --prepare_only
 ```
 
-### 4. Symbolic Regression / Interpretability (Optional)
+Run the complete five-fold experiment:
 
 ```bash
-python symbolic_regression.py --data_dir ./drought_analysis_gpu --model_path checkpoints/best_model.pth
+python buffered_spatial_holdout.py \
+  --data_dir /path/to/data \
+  --output_root . \
+  --device cuda
 ```
 
-## Model Outputs and Units
+To run selected folds, add, for example, `--folds 0 1`. Each fold writes its
+checkpoint, predictions, loss history, and metrics under
+`fold_<n>/checkpoints/` and `fold_<n>/results/`.
 
-Core physical unit convention:
+After all five folds have completed, generate Figure S10 and its plotting data:
 
-- Soil moisture state (`pred_sm`, `pred_phy`): `mm`
-- Flux terms (`E_act`, `D_flux`, precipitation, PET): `mm/day`
+```bash
+python plot_spatial_holdout_boxplots.py
+```
 
-Metric exports in `evaluate.py` convert error metrics (`RMSE`, `MAE`, `Bias`, `ubRMSE`) to volumetric water content scale (`cm3/cm3`) by dividing by 100 for reporting.
+The plotting script reads `fold_0/results/metrics_summary.csv` through
+`fold_4/results/metrics_summary.csv` and writes JPG, PDF, and CSV outputs to
+`figures/`.
 
-## Reproducibility
+## Optional preprocessing and symbolic regression
 
-- Seed control is configured in `train.py` (`--seed`).
-- Train/Val/Test split is stratified by cluster ID for balanced distribution.
+```bash
+python drought_indices_optimized.py --data_dir /path/to/data
+python symbolic_regression.py \
+  --data_dir /path/to/data \
+  --model_path checkpoints/best_model.pth
+```
 
-## Troubleshooting
+## Model outputs and units
 
-- If cluster CSV is not found, the pipeline falls back to a zero-cluster assignment.
-- On Windows, dataloader workers are forced to `0` by default for stability.
-- If mixed precision becomes unstable, disable AMP via `--no_amp`.
+- Soil-moisture states (`pred_sm` and `pred_phy`): mm.
+- Flux terms (`E_act`, `D_flux`, precipitation, and PET): mm/day.
+- `evaluate.py` reports RMSE, MAE, Bias, and ubRMSE in volumetric water
+  content scale (cm3/cm3) by dividing the internal millimetre-scale errors by
+  100.
+
+## Reproducibility notes
+
+- The standard Train/Validation/Test workflow uses cluster-stratified splitting.
+- The spatial-transfer experiment uses the five-fold contiguous spatial-block
+  design described above.
+- Random seeds are controlled through `--seed` (default: 42).
+- Batch-size benchmarking is enabled in the spatial-holdout workflow; use
+  `--fixed_batch_size` when the reported fixed batch size must be retained.
+- Run `python -m compileall .` after downloading the repository to verify that
+  all Python modules are syntactically valid.
+- On Windows, data-loader workers are reduced for stability. Linux is
+  recommended for the exact Mamba/CUDA environment.

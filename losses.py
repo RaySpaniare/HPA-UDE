@@ -8,6 +8,7 @@ Loss function:
 2. Flux Boundary Loss
 """
 import torch
+from torch import nn
 import torch.nn.functional as F
 
 
